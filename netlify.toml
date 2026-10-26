@@ -14,6 +14,17 @@
   targetPort = 5173
   port = 8888
 
+# Dashboard fora dos buscadores
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/admin"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
 # API Express (Netlify Function "api") no mesmo domínio
 [[redirects]]
   from = "/api/*"

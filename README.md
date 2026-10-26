@@ -46,6 +46,15 @@ React + Vite + TypeScript, portado do design: o CSS original fica em `src/styles
 | `src/components/PickModal.tsx` | "Vou presentear": levar / Pix / parte, QR Code, registro na API e mensagem do WhatsApp |
 | `src/lib/pix.ts` | gera o Pix copia e cola (mesmo código do design, com testes) |
 
+### Dashboard (`/admin`)
+Login com um usuário do `ADMIN_USERS`; a sessão dura 12h e fica salva no navegador. O código do admin é carregado à parte (o convidado não baixa).
+
+| Tela | O que faz |
+|---|---|
+| Presentes (`/admin`) | lista com busca (nome, chave ou convidado) e filtros por tipo, situação e cômodo; mostra quem escolheu e como |
+| Novo / editar (`/admin/presentes/...`) | todos os campos, foto reduzida no navegador antes do upload, apagar com confirmação; abaixo, "Quem presenteou": corrigir/remover e lançar contribuição manual |
+| Resumo (`/admin/resumo`) | escolhidos, quem vai levar, total esperado em Pix, vales, partes e todas as contribuições |
+
 Para o Pix e o botão do WhatsApp aparecerem, preencha `pix` e `whatsapp` em `src/content.ts`. Para as galerias, ponha as fotos em `public/photos/` e liste-as em `galleries`.
 
 Testes: `npm test -w frontend`.
