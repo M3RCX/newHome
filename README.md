@@ -21,10 +21,20 @@ Banco e fotos ficam no **Supabase** (Postgres + Storage).
 ## Setup local
 ```bash
 npm install
-cp .env.example .env   # preencha SUPABASE_SERVICE_ROLE_KEY
+cp .env.example .env   # preencha as variáveis abaixo
 npm run dev            # netlify dev (front + API) → http://localhost:8888
 ```
 Para rodar só o front: `npm run dev -w frontend` (http://localhost:5173).
+
+### Variáveis de ambiente
+Em produção ficam no painel da Netlify; localmente, no `.env` da raiz.
+
+| Variável | De onde vem |
+|---|---|
+| `SUPABASE_URL` | Supabase → Project Settings → API |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API (secreta, nunca no front) |
+| `JWT_SECRET` | 48+ bytes aleatórios: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
+| `ADMIN_USERS` | `email:hash` por admin, separados por vírgula. Gere com `npm run hash-password -w backend -- voce@exemplo.com` (a senha é pedida no terminal) |
 
 ## Banco de dados
 As migrações ficam em `backend/supabase/migrations/`:
@@ -56,3 +66,36 @@ npm run import:design -- --check   # só confere o arquivo
 npm run import:design              # envia as fotos e faz upsert dos produtos
 ```
 Pode rodar de novo sem problema: faz upsert por `slug` e sobrescreve as fotos.
+
+## API
+Express rodando como Netlify Function (`backend/netlify/functions/api.ts`), com a lógica em `backend/src/`.
+Os erros voltam como `{ "error": "<codigo>" }`, por exemplo `already_chosen`, `unauthorized` ou `invalid_body`.
+
+### Pública
+| Método e rota | O que faz |
+|---|---|
+| `GET /api/health` | checa a conexão com o banco |
+| `GET /api/products` | lista os presentes com `status` (`livre`/`escolhido`). Nunca traz nomes nem o modo |
+| `POST /api/products/:slug/contributions` | `{ guestName, mode: "levar"\|"pix"\|"parte", amountCents? }` → 201, 409 (já escolhido), 400 ou 404. Limite: 10 a cada 10 min por IP |
+
+### Admin (`Authorization: Bearer <token>`)
+| Método e rota | O que faz |
+|---|---|
+| `POST /api/auth/login` | `{ email, password }` → `{ token, expiresAt }` (válido por 12h). Limite: 5 por minuto |
+| `GET /api/auth/me` | valida o token |
+| `GET /api/admin/products` · `GET /api/admin/products/:id` | produtos com as contribuições (nomes e modo) |
+| `POST /api/admin/products` | JSON ou multipart (campo `image`: jpg/png/webp até 4 MB). Sem `slug`, gera um a partir do nome |
+| `PUT /api/admin/products/:id` | atualização parcial; `image` troca a foto, `removeImage: true` remove |
+| `DELETE /api/admin/products/:id` | apaga o produto, as contribuições e a foto |
+| `GET /api/admin/contributions?productId=` | lista as contribuições |
+| `POST /api/admin/contributions` | lançamento manual `{ productSlug, guestName, mode, amountCents? }`, com as mesmas regras da reserva |
+| `PUT /api/admin/contributions/:id` · `DELETE …/:id` | correção direta |
+| `GET /api/admin/summary` | itens escolhidos, totais por modo, total em Pix, vales e partes |
+
+A function `keepalive` roda uma vez por dia e faz uma consulta, para o Supabase free não pausar o projeto.
+
+### Testes
+```bash
+npm test -w backend
+```
+Vitest + supertest com um repositório em memória. `test/lambda.test.ts` passa pelo `serverless-http`, como na Netlify.

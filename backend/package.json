@@ -5,15 +5,31 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "hash-password": "tsx scripts/hash-password.ts",
     "import:design": "tsx scripts/import-design.ts ../design/casa-nova.html"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
+    "@supabase/supabase-js": "^2.45.4",
+    "bcryptjs": "^3.0.3",
+    "express": "^5.3.0",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.5.0",
+    "serverless-http": "^3.2.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.3.0",
     "@types/node": "^22.9.0",
+    "@types/supertest": "^6.0.3",
     "supabase": "^2.122.0",
+    "supertest": "^7.3.1",
     "tsx": "^4.19.2",
-    "typescript": "~5.6.3"
+    "typescript": "~5.6.3",
+    "vitest": "^2.1.9"
   }
 }
