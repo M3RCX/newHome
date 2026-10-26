@@ -59,6 +59,18 @@ Para o Pix e o botão do WhatsApp aparecerem, preencha `pix` e `whatsapp` em `sr
 
 Testes: `npm test -w frontend`.
 
+## Deploy (Netlify + GitHub)
+1. Crie um repositório **privado** no GitHub e envie o código:
+   `git remote add origin https://github.com/<você>/<repo>.git && git push -u origin main`
+2. Na Netlify: **Add new site → Import from Git**, escolha o repo. Deixe o diretório base vazio (a raiz); o resto vem do `netlify.toml`.
+3. Em **Site configuration → Environment variables**, crie (marque como secretas):
+   `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET` (use outro valor, não o do `.env` local) e `ADMIN_USERS`.
+4. **Deploys → Trigger deploy**. Depois confira:
+   - `https://<site>.netlify.app/api/health` → `{"ok":true}`
+   - a home lista 113 presentes; `/admin` pede login e entra com o seu usuário
+   - em **Functions**, a `keepalive` aparece como agendada (diária)
+5. Antes de divulgar: preencha `pix` e `whatsapp` em `frontend/src/content.ts` e faça push.
+
 ## Banco de dados
 As migrações ficam em `backend/supabase/migrations/`:
 
