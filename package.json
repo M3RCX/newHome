@@ -1,0 +1,17 @@
+{
+  "name": "cha-casa-nova",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npx -y netlify-cli@17 dev --filter frontend",
+    "build": "npm run build -w frontend",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "import:design": "npm run import:design -w backend --"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

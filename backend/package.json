@@ -1,0 +1,19 @@
+{
+  "name": "backend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "import:design": "tsx scripts/import-design.ts ../design/casa-nova.html"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "supabase": "^2.122.0",
+    "tsx": "^4.19.2",
+    "typescript": "~5.6.3"
+  }
+}

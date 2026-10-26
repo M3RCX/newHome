@@ -1,0 +1,28 @@
+[build]
+  command = "npm run build"
+  publish = "frontend/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "backend/netlify/functions"
+  node_bundler = "esbuild"
+
+[dev]
+  command = "npm run dev -w frontend"
+  targetPort = 5173
+  port = 8888
+
+# API Express (Netlify Function "api") no mesmo domínio
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+# SPA: /admin e demais rotas caem no index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
