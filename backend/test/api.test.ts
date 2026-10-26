@@ -352,4 +352,14 @@ describe("utilitários", () => {
     ]);
     expect(() => parseAdminUsers("sem-hash")).toThrow();
   });
+
+  it("aceita ADMIN_USERS vazio e recusa qualquer login", async () => {
+    expect(parseAdminUsers("")).toEqual([]);
+    const noAdmins = createApp({ repo: fake.repo, config: { jwtSecret: JWT_SECRET, admins: [] } });
+    await request(noAdmins).get("/api/products").expect(200);
+    await request(noAdmins)
+      .post("/api/auth/login")
+      .send({ email: ADMIN_EMAIL, password: ADMIN_PASSWORD })
+      .expect(401);
+  });
 });

@@ -36,6 +36,20 @@ Em produção ficam no painel da Netlify; localmente, no `.env` da raiz.
 | `JWT_SECRET` | 48+ bytes aleatórios: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
 | `ADMIN_USERS` | `email:hash` por admin, separados por vírgula. Gere com `npm run hash-password -w backend -- voce@exemplo.com` (a senha é pedida no terminal) |
 
+## Front-end
+React + Vite + TypeScript, portado do design: o CSS original fica em `src/styles/design.css` e as fontes em `src/assets/fonts`.
+
+| Arquivo | O que tem |
+|---|---|
+| `src/content.ts` | textos, história, galerias, **chave Pix e WhatsApp**, planta e faixas de preço. Edite aqui e faça deploy |
+| `src/pages/Home.tsx` | página pública: hero, sumário, história, planta + lista, vales |
+| `src/components/PickModal.tsx` | "Vou presentear": levar / Pix / parte, QR Code, registro na API e mensagem do WhatsApp |
+| `src/lib/pix.ts` | gera o Pix copia e cola (mesmo código do design, com testes) |
+
+Para o Pix e o botão do WhatsApp aparecerem, preencha `pix` e `whatsapp` em `src/content.ts`. Para as galerias, ponha as fotos em `public/photos/` e liste-as em `galleries`.
+
+Testes: `npm test -w frontend`.
+
 ## Banco de dados
 As migrações ficam em `backend/supabase/migrations/`:
 

@@ -1,0 +1,25 @@
+/* Fontes do design (antes embutidas em base64 no HTML). Figtree e Caveat vêm do Google Fonts (index.html). */
+@font-face {
+  font-family: "Hit and Run";
+  src: url("../assets/fonts/hit-and-run-400.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Sackers";
+  src: url("../assets/fonts/sackers-300.woff2") format("woff2");
+  font-weight: 300;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Sackers";
+  src: url("../assets/fonts/sackers-500.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Sackers";
+  src: url("../assets/fonts/sackers-800.woff2") format("woff2");
+  font-weight: 800;
+  font-display: swap;
+}

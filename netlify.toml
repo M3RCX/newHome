@@ -21,8 +21,14 @@
   status = 200
   force = true
 
-# SPA: /admin e demais rotas caem no index.html
+# SPA: o site público é só "/"; o dashboard precisa do fallback para links diretos.
+# (Um "/*" aqui capturaria os módulos que o Vite serve no netlify dev.)
 [[redirects]]
-  from = "/*"
+  from = "/admin/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
   to = "/index.html"
   status = 200
