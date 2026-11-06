@@ -30,9 +30,9 @@ export const site = {
 
 // Pix e WhatsApp: preencha para o copia e cola e o botão do WhatsApp aparecerem no site.
 export const pix: PixConfig = {
-  key: "", // telefone no formato +5511999999999, e-mail, CPF ou chave aleatória
-  name: "", // nome do titular, como aparece no app do banco
-  city: "", // cidade do titular
+  key: "32384714813", // telefone no formato +5511999999999, e-mail, CPF ou chave aleatória
+  name: "guilherme mercante remberg fernandes", // nome do titular, como aparece no app do banco
+  city: "são paulo", // cidade do titular
 };
 export const whatsapp: string = ""; // com DDD, ex.: "+55 11 99999-9999"
 
