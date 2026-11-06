@@ -1,8 +1,8 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState, type ClipboardEvent, type FormEvent } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ROOMS } from "../../content";
 import { useAdminProduct, useAdminProducts, useDeleteProduct, useSaveProduct } from "../../hooks/useAdmin";
-import { adminErrorMessage, type AdminProduct } from "../../lib/adminApi";
+import { adminApi, adminErrorMessage, type AdminProduct, type ProductPreview } from "../../lib/adminApi";
 import { parseBrlToCents } from "../../lib/format";
 import { shrinkImage } from "../../lib/image";
 import type { ProductKind } from "../../lib/types";
@@ -31,7 +31,20 @@ const fromProduct = (p: AdminProduct): Draft => ({
   slug: p.slug,
 });
 
-const EMPTY: Draft = { kind: "item", room: "Cozinha", name: "", spec: "", price: "", purchaseUrl: "", slug: "" };
+const isMeliUrl = (s: string) => /^https?:\/\/[^/\s]*mercadoli(vre|bre)\.com/i.test(s.trim());
+
+type LinkStatus = { kind: "loading" | "ok" | "partial" | "error"; text: string };
+
+function describePreview(p: ProductPreview): LinkStatus {
+  if (!p.warning) return { kind: "ok", text: "Preenchido com os dados do Mercado Livre. Confira tudo antes de salvar." };
+  const why =
+    p.warning === "meli_not_configured"
+      ? "o preenchimento automático completo ainda não foi configurado (veja o README)"
+      : "não consegui buscar os dados no Mercado Livre agora";
+  return { kind: "partial", text: `Só o nome veio do link: ${why}. Preencha o valor e a foto.` };
+}
+
+const EMPTY: Draft ={ kind: "item", room: "Cozinha", name: "", spec: "", price: "", purchaseUrl: "", slug: "" };
 
 function validate(d: Draft): Partial<Record<keyof Draft, string>> {
   const errors: Partial<Record<keyof Draft, string>> = {};
@@ -70,6 +83,8 @@ function ProductForm({ product }: { product?: AdminProduct }) {
   const [touched, setTouched] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [saved, setSaved] = useState(!!justCreated);
+  const [remoteImage, setRemoteImage] = useState<string | null>(null); // foto vinda do link; o servidor baixa ao salvar
+  const [linkStatus, setLinkStatus] = useState<LinkStatus | null>(null);
 
   useEffect(() => {
     if (!image) return;
@@ -83,7 +98,35 @@ function ProductForm({ product }: { product?: AdminProduct }) {
     setSaved(false);
   };
   const rooms = [...new Set([...ROOMS, ...(all?.map((p) => p.room) ?? [])])].filter((r) => r !== "Cotas");
-  const preview = image?.url ?? (removeImage ? null : product?.imageUrl);
+  const preview = image?.url ?? remoteImage ?? (removeImage ? null : product?.imageUrl);
+
+  // Lê o link e preenche. Ao colar, só completa o que está vazio; no botão, substitui tudo.
+  async function fillFromLink(url: string, overwrite: boolean) {
+    setLinkStatus({ kind: "loading", text: "Buscando os dados do produto…" });
+    try {
+      const p = await adminApi.previewProduct(url.trim());
+      setDraft((d) => ({
+        ...d,
+        name: overwrite || !d.name.trim() ? p.name : d.name,
+        spec: p.spec && (overwrite || !d.spec.trim()) ? p.spec : d.spec,
+        price: p.priceCents && (overwrite || !d.price.trim()) ? centsToInput(p.priceCents) : d.price,
+      }));
+      if (p.imageUrl && (overwrite || (!image && !product?.imageUrl))) {
+        setImage(null);
+        setRemoteImage(p.imageUrl);
+        setRemoveImage(false);
+      }
+      setSaved(false);
+      setLinkStatus(describePreview(p));
+    } catch (err) {
+      setLinkStatus({ kind: "error", text: adminErrorMessage(err) });
+    }
+  }
+
+  function onPasteLink(e: ClipboardEvent<HTMLInputElement>) {
+    const text = e.clipboardData.getData("text").trim();
+    if (isMeliUrl(text)) void fillFromLink(text, false);
+  }
 
   async function pickImage(file: File | undefined) {
     setImageError("");
@@ -91,6 +134,7 @@ function ProductForm({ product }: { product?: AdminProduct }) {
     try {
       const blob = await shrinkImage(file);
       setImage({ blob, url: URL.createObjectURL(blob) });
+      setRemoteImage(null);
       setRemoveImage(false);
       setSaved(false);
     } catch (err) {
@@ -111,6 +155,7 @@ function ProductForm({ product }: { product?: AdminProduct }) {
     form.set("purchaseUrl", draft.purchaseUrl.trim());
     if (draft.slug.trim()) form.set("slug", draft.slug.trim());
     if (image) form.set("image", image.blob, "foto.jpg");
+    else if (remoteImage) form.set("imageUrl", remoteImage);
     else if (removeImage && product) form.set("removeImage", "true");
 
     save.mutate(
@@ -118,6 +163,7 @@ function ProductForm({ product }: { product?: AdminProduct }) {
       {
         onSuccess: (p) => {
           setImage(null);
+          setRemoteImage(null);
           setRemoveImage(false);
           if (!product) navigate(`/admin/presentes/${p.id}`, { replace: true, state: { created: true } });
           else setSaved(true);
@@ -170,6 +216,47 @@ function ProductForm({ product }: { product?: AdminProduct }) {
             </div>
           )}
 
+          {draft.kind === "item" && (
+            <div {...fieldProps("purchaseUrl")} style={{ gridColumn: "1/-1" }}>
+              <label htmlFor="url">Link do produto (opcional)</label>
+              <input
+                id="url"
+                type="url"
+                value={draft.purchaseUrl}
+                onChange={(e) => set("purchaseUrl", e.target.value)}
+                onPaste={onPasteLink}
+                placeholder="Cole o link do Mercado Livre e preenchemos o resto"
+              />
+              {err("purchaseUrl") || (
+                <span className="hint">
+                  Ao colar o link da página do produto no Mercado Livre, o nome, as especificações, o valor e a foto são
+                  preenchidos sozinhos. Confira antes de salvar.
+                </span>
+              )}
+              {isMeliUrl(draft.purchaseUrl) && (
+                <div className="row" style={{ alignItems: "baseline" }}>
+                  <button
+                    type="button"
+                    className="linkbtn"
+                    onClick={() => fillFromLink(draft.purchaseUrl, true)}
+                    disabled={linkStatus?.kind === "loading"}
+                  >
+                    Atualizar com os dados do link
+                  </button>
+                  <span className="hint">(substitui nome, especificação, valor e foto)</span>
+                </div>
+              )}
+              {linkStatus && (
+                <div
+                  className={linkStatus.kind === "error" ? "alert" : linkStatus.kind === "partial" ? "warn-msg" : "ok-msg"}
+                  role={linkStatus.kind === "error" ? "alert" : "status"}
+                >
+                  {linkStatus.text}
+                </div>
+              )}
+            </div>
+          )}
+
           <div {...fieldProps("name")} style={{ gridColumn: "1/-1" }}>
             <label htmlFor="name">Nome</label>
             <input id="name" value={draft.name} onChange={(e) => set("name", e.target.value)} maxLength={200} />
@@ -213,32 +300,19 @@ function ProductForm({ product }: { product?: AdminProduct }) {
             {err("slug") || <span className="hint">Identificador do presente; usado na API.</span>}
           </div>
 
-          {draft.kind === "item" && (
-            <div {...fieldProps("purchaseUrl")} style={{ gridColumn: "1/-1" }}>
-              <label htmlFor="url">Link de onde comprar (opcional)</label>
-              <input
-                id="url"
-                type="url"
-                value={draft.purchaseUrl}
-                onChange={(e) => set("purchaseUrl", e.target.value)}
-                placeholder="https://"
-              />
-              {err("purchaseUrl")}
-            </div>
-          )}
-
           <div className="field full">
             <label htmlFor="image">Foto</label>
             <div className="imgbox">
               <div className="preview">{preview ? <img src={preview} alt="Prévia da foto" /> : "sem foto"}</div>
               <div style={{ display: "grid", gap: 8 }}>
                 <input id="image" type="file" accept="image/*" onChange={(e) => pickImage(e.target.files?.[0])} />
-                {(image || (product?.imageUrl && !removeImage)) && (
+                {(image || remoteImage || (product?.imageUrl && !removeImage)) && (
                   <button
                     type="button"
                     className="linkbtn red"
                     onClick={() => {
                       setImage(null);
+                      setRemoteImage(null);
                       setRemoveImage(!!product?.imageUrl);
                       setSaved(false);
                     }}

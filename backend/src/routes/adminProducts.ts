@@ -5,6 +5,7 @@ import { z } from "zod";
 import { HttpError } from "../errors.js";
 import { getRawBody } from "../rawBody.js";
 import type { ProductInput, Repo } from "../repo.js";
+import type { Meli } from "../services/meli.js";
 import { MAX_AMOUNT_CENTS, SLUG_RE } from "./public.js";
 
 const IMAGE_EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
@@ -48,11 +49,13 @@ const productFields = z.object({
     .transform((v) => v || null),
   sortOrder: z.coerce.number().int(),
   removeImage: boolField,
+  // Foto por link (CDN do Mercado Livre): o servidor baixa e guarda no nosso Storage.
+  imageUrl: z.url().max(1000),
 });
 
 const createBody = productFields
   .omit({ removeImage: true })
-  .partial({ slug: true, spec: true, purchaseUrl: true, sortOrder: true });
+  .partial({ slug: true, spec: true, purchaseUrl: true, sortOrder: true, imageUrl: true });
 
 const updateBody = productFields.partial();
 
@@ -73,8 +76,14 @@ export function slugify(text: string) {
 const imagePathFor = (slug: string, mimetype: string) =>
   `${slug}-${Date.now().toString(36)}.${IMAGE_EXT[mimetype]}`;
 
-export function adminProductsRouter(repo: Repo) {
+export function adminProductsRouter(repo: Repo, meli: Meli) {
   const router = Router();
+
+  // Foto enviada no formulário (arquivo) tem prioridade sobre a foto por link.
+  async function incomingImage(req: Request, imageUrl: string | undefined) {
+    if (req.file) return { bytes: req.file.buffer, contentType: req.file.mimetype };
+    return imageUrl ? meli.downloadImage(imageUrl) : null;
+  }
 
   // Remoção de foto antiga é "melhor esforço": não falha a operação principal.
   const discardImage = (path: string | null | undefined) =>
@@ -105,9 +114,10 @@ export function adminProductsRouter(repo: Repo) {
       sortOrder: body.sortOrder ?? (await repo.nextSortOrder()),
     };
 
-    if (req.file) {
-      input.imagePath = imagePathFor(input.slug, req.file.mimetype);
-      await repo.uploadImage(input.imagePath, req.file.buffer, req.file.mimetype);
+    const image = await incomingImage(req, body.imageUrl);
+    if (image) {
+      input.imagePath = imagePathFor(input.slug, image.contentType);
+      await repo.uploadImage(input.imagePath, image.bytes, image.contentType);
     }
 
     try {
@@ -131,13 +141,14 @@ export function adminProductsRouter(repo: Repo) {
     const existing = await repo.getProduct(id);
     if (!existing) throw new HttpError(404, "product_not_found");
 
-    const { removeImage, ...fields } = updateBody.parse(req.body ?? {});
+    const { removeImage, imageUrl, ...fields } = updateBody.parse(req.body ?? {});
     const patch: Partial<ProductInput> = { ...fields };
     if ((fields.kind ?? existing.kind) === "cota") patch.room = "Cotas";
 
-    if (req.file) {
-      patch.imagePath = imagePathFor(fields.slug ?? existing.slug, req.file.mimetype);
-      await repo.uploadImage(patch.imagePath, req.file.buffer, req.file.mimetype);
+    const image = await incomingImage(req, imageUrl);
+    if (image) {
+      patch.imagePath = imagePathFor(fields.slug ?? existing.slug, image.contentType);
+      await repo.uploadImage(patch.imagePath, image.bytes, image.contentType);
     } else if (removeImage) {
       patch.imagePath = null;
     }
@@ -148,7 +159,7 @@ export function adminProductsRouter(repo: Repo) {
     try {
       product = await repo.updateProduct(id, patch);
     } catch (err) {
-      if (req.file) await discardImage(patch.imagePath);
+      if (image) await discardImage(patch.imagePath);
       throw err;
     }
     if (patch.imagePath !== undefined && existing.imagePath !== patch.imagePath) {

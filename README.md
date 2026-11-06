@@ -35,6 +35,7 @@ Em produção ficam no painel da Netlify; localmente, no `.env` da raiz.
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API (secreta, nunca no front) |
 | `JWT_SECRET` | 48+ bytes aleatórios: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` |
 | `ADMIN_USERS` | `email:hash` por admin, separados por vírgula. Gere com `npm run hash-password -w backend -- voce@exemplo.com` (a senha é pedida no terminal) |
+| `MELI_CLIENT_ID`, `MELI_CLIENT_SECRET` | opcionais: app do Mercado Livre para preencher o produto pelo link (veja "Preencher pelo link do Mercado Livre") |
 
 ## Front-end
 React + Vite + TypeScript, portado do design: o CSS original fica em `src/styles/design.css` e as fontes em `src/assets/fonts`.
@@ -54,6 +55,16 @@ Login com um usuário do `ADMIN_USERS`; a sessão dura 12h e fica salva no naveg
 | Presentes (`/admin`) | lista com busca (nome, chave ou convidado) e filtros por tipo, situação e cômodo; mostra quem escolheu e como |
 | Novo / editar (`/admin/presentes/...`) | todos os campos, foto reduzida no navegador antes do upload, apagar com confirmação; abaixo, "Quem presenteou": corrigir/remover e lançar contribuição manual |
 | Resumo (`/admin/resumo`) | escolhidos, quem vai levar, total esperado em Pix, vales, partes e todas as contribuições |
+
+### Preencher pelo link do Mercado Livre
+No formulário de presente, ao colar o link do produto no campo **Link do produto**, o nome, as especificações (marca, modelo, cor…), o valor e a foto são preenchidos sozinhos. Confira tudo antes de salvar. O botão "Atualizar com os dados do link" refaz o preenchimento, substituindo o que estiver nos campos.
+
+O Mercado Livre bloqueia a leitura automática das páginas e fechou a API pública, então isso usa a **API oficial com um app seu** (grátis):
+1. Entre em [developers.mercadolivre.com.br](https://developers.mercadolivre.com.br) com a sua conta do Mercado Livre e crie uma aplicação (os nomes dos campos podem variar um pouco; o redirect pode ser qualquer `https://…`).
+2. Copie o **App ID** (client id) e a **Secret Key** do app.
+3. No `.env`, preencha `MELI_CLIENT_ID` e `MELI_CLIENT_SECRET` e reinicie o `npm run dev`. Em produção, cadastre as mesmas duas variáveis na Netlify.
+
+Sem essas chaves, ou se a API recusar o link, o formulário preenche só o nome (tirado do próprio endereço) e avisa; o resto fica manual. Funcionam links de anúncios (`…/p/MLB…?pdp_filters=item_id:MLB…`, `…/up/MLBU…`, `produto.mercadolivre.com.br/MLB-…`); links curtos (`meli.la/…`) não: abra o produto e copie o endereço completo. A foto é baixada pelo servidor, só do CDN do Mercado Livre (`mlstatic.com`).
 
 Para o Pix e o botão do WhatsApp aparecerem, preencha `pix` e `whatsapp` em `src/content.ts`. Para as galerias, ponha as fotos em `public/photos/` e liste-as em `galleries`.
 

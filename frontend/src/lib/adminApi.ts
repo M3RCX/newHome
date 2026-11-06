@@ -38,6 +38,17 @@ export type Summary = {
   partes: { slug: string; name: string; count: number; totalCents: number }[];
 };
 
+// Dados lidos de um link do Mercado Livre (POST /api/admin/product-preview).
+export type ProductPreview = {
+  name: string;
+  spec: string;
+  priceCents: number | null;
+  imageUrl: string | null;
+  purchaseUrl: string;
+  source: "api" | "link";
+  warning: null | "meli_not_configured" | "meli_unavailable" | "meli_not_found";
+};
+
 // ---- sessão (token no localStorage, observável pelo React) ----
 
 const TOKEN_KEY = "casa-nova:admin-token";
@@ -133,6 +144,8 @@ export const adminApi = {
   deleteContribution: (id: string) => request<null>(`/admin/contributions/${id}`, { method: "DELETE" }),
 
   summary: () => request<Summary>("/admin/summary"),
+
+  previewProduct: (url: string) => request<ProductPreview>("/admin/product-preview", json("POST", { url })),
 };
 
 // Mensagens dos erros que o admin pode ver.
@@ -147,6 +160,9 @@ export function adminErrorMessage(err: unknown): string {
     cota_only_pix: "Vales só aceitam Pix.",
     invalid_amount: "Informe um valor maior que zero.",
     invalid_image_type: "A foto precisa ser JPG, PNG ou WebP.",
+    invalid_url: "Cole o link completo da página do produto no Mercado Livre.",
+    invalid_image_url: "Não consegui usar a foto do link. Envie a foto manualmente.",
+    image_download_failed: "Não consegui baixar a foto do Mercado Livre. Remova a foto e envie uma manualmente.",
     image_too_large: "A foto ficou grande demais (máx. 4 MB).",
     invalid_body: "Confira os campos destacados.",
     network_error: "Sem conexão com o servidor.",

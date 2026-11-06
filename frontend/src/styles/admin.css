@@ -44,6 +44,7 @@
 .imgbox .preview{width:140px;height:140px;border-radius:8px;background:#fff;border:1.5px solid var(--line);display:grid;place-items:center;overflow:hidden;color:var(--muted);font:500 11px var(--mono)}
 .imgbox .preview img{width:100%;height:100%;object-fit:contain}
 .danger{background:#B4472E!important;color:#fff!important}
+.warn-msg{border:1.5px solid var(--brass);background:#FBF1D6;color:var(--brass-ink);border-radius:8px;padding:10px 14px;font-size:14px;font-weight:600}
 .ok-msg{border:1.5px solid var(--ok);background:var(--paper);color:var(--ok);border-radius:8px;padding:10px 14px;font-size:14px;font-weight:600}
 
 .ctable{width:100%;border-collapse:collapse;font-size:14.5px}

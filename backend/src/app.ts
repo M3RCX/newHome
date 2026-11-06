@@ -7,12 +7,14 @@ import { HttpError } from "./errors.js";
 import { requireAdmin } from "./middleware/auth.js";
 import { captureRawBody, jsonFromRawBody } from "./rawBody.js";
 import type { Repo } from "./repo.js";
+import { createMeli, type Meli } from "./services/meli.js";
 import { adminContributionsRouter, summaryRouter } from "./routes/adminContributions.js";
+import { adminPreviewRouter } from "./routes/adminPreview.js";
 import { adminProductsRouter } from "./routes/adminProducts.js";
 import { authRouter } from "./routes/auth.js";
 import { publicRouter } from "./routes/public.js";
 
-export type AppDeps = { repo: Repo; config: AppConfig };
+export type AppDeps = { repo: Repo; config: AppConfig; meli?: Meli };
 
 const JSON_LIMIT_BYTES = 50 * 1024;
 
@@ -38,7 +40,7 @@ const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
   }
 };
 
-export function createApp({ repo, config }: AppDeps) {
+export function createApp({ repo, config, meli = createMeli(null) }: AppDeps) {
   const app = express();
   app.disable("x-powered-by");
   app.use(helmet());
@@ -63,7 +65,8 @@ export function createApp({ repo, config }: AppDeps) {
 
   const admin = express.Router();
   admin.use(requireAdmin(config.jwtSecret));
-  admin.use("/products", adminProductsRouter(repo));
+  admin.use("/products", adminProductsRouter(repo, meli));
+  admin.use("/product-preview", adminPreviewRouter(meli));
   admin.use("/contributions", adminContributionsRouter(repo));
   admin.use("/summary", summaryRouter(repo));
   api.use("/admin", admin);
