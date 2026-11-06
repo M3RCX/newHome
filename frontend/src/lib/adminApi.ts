@@ -46,7 +46,7 @@ export type ProductPreview = {
   imageUrl: string | null;
   purchaseUrl: string;
   source: "api" | "link";
-  warning: null | "meli_not_configured" | "meli_unavailable" | "meli_not_found";
+  warning: null | "meli_not_configured" | "meli_unavailable" | "meli_restricted" | "meli_not_found";
 };
 
 // ---- sessão (token no localStorage, observável pelo React) ----

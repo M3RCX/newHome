@@ -12,6 +12,7 @@ const Login = lazy(() => import("./pages/admin/Login"));
 const ProductList = lazy(() => import("./pages/admin/ProductList"));
 const ProductForm = lazy(() => import("./pages/admin/ProductForm"));
 const Summary = lazy(() => import("./pages/admin/Summary"));
+const Bookmarklet = lazy(() => import("./pages/admin/Bookmarklet"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,6 +38,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="presentes/novo" element={<ProductForm />} />
               <Route path="presentes/:id" element={<ProductForm />} />
               <Route path="resumo" element={<Summary />} />
+              <Route path="botao" element={<Bookmarklet />} />
               <Route path="*" element={<ProductList />} />
             </Route>
             <Route path="*" element={<Home />} />

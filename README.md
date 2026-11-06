@@ -66,6 +66,13 @@ O Mercado Livre bloqueia a leitura automática das páginas e fechou a API públ
 
 Sem essas chaves, ou se a API recusar o link, o formulário preenche só o nome (tirado do próprio endereço) e avisa; o resto fica manual. Funcionam links de anúncios (`…/p/MLB…?pdp_filters=item_id:MLB…`, `…/up/MLBU…`, `produto.mercadolivre.com.br/MLB-…`); links curtos (`meli.la/…`) não: abra o produto e copie o endereço completo. A foto é baixada pelo servidor, só do CDN do Mercado Livre (`mlstatic.com`).
 
+#### Botão do navegador (traz o valor e funciona com qualquer link)
+A API do Mercado Livre não libera o **valor** e bloqueia alguns anúncios (os `…/up/MLBU…`, por exemplo). Para esses casos há um favorito, "Presente do ML", que lê a página que você está vendo e abre o formulário já preenchido com nome, valor, foto e especificações:
+1. No dashboard, abra **Botão ML** (`/admin/botao`) e arraste o botão para a barra de favoritos (`Ctrl+Shift+B` mostra a barra).
+2. Na página de um produto no Mercado Livre, clique no favorito. Abre uma nova aba com o formulário preenchido; confira e salve.
+
+O botão aponta para o endereço onde você abriu a página: use a versão do `localhost` em desenvolvimento e refaça o botão no site publicado. Se o navegador não executar o favorito (alguns sites bloqueiam), a própria página mostra um código para colar no Console (`F12`). O código que lê a página fica em `frontend/src/bookmarklet/extract.js` (testado com páginas simuladas; se o Mercado Livre mudar o layout, é lá que se ajusta).
+
 Para o Pix e o botão do WhatsApp aparecerem, preencha `pix` e `whatsapp` em `src/content.ts`. Para as galerias, ponha as fotos em `public/photos/` e liste-as em `galleries`.
 
 Testes: `npm test -w frontend`.

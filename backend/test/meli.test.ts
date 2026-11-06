@@ -109,6 +109,32 @@ describe("preview", () => {
     expect(p).toMatchObject({ name: catalog.name, priceCents: 19990, imageUrl: "https://http2.mlstatic.com/D_cat-F.jpg", source: "api" });
   });
 
+  it("se o anúncio for bloqueado (403), tenta o catálogo do mesmo link", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { fetchFn } = mockApi({
+      "/oauth/token": token,
+      "/items/MLB5456370676": () => json({ error: "access_denied" }, 403),
+      "/products/MLB42501702": () => json({ ...catalog, buy_box_winner: null }),
+    });
+    const p = await createMeli(CREDS, fetchFn).preview(ITEM_URL);
+    expect(p).toMatchObject({ source: "api", name: catalog.name, priceCents: null, warning: null });
+  });
+
+  it("avisa quando o ML bloqueia o link inteiro (403 sem catálogo)", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    const up = "https://www.mercadolivre.com.br/jogo-zelda/up/MLBU2296026608?pdp_filters=item_id%3AMLB3592532790";
+    const { fetchFn } = mockApi({
+      "/oauth/token": token,
+      "/items/MLB3592532790": () => json({}, 403),
+      "/user-products/MLBU2296026608": () => json({}, 403),
+    });
+    expect(await createMeli(CREDS, fetchFn).preview(up)).toMatchObject({
+      source: "link",
+      warning: "meli_restricted",
+      name: "Jogo zelda",
+    });
+  });
+
   it("renova o token expirado e tenta de novo", async () => {
     let first = true;
     const { fetchFn, calls } = mockApi({
@@ -133,8 +159,10 @@ describe("preview", () => {
     const forbidden = mockApi({ "/oauth/token": token, "/items/MLB5456370676": () => json({}, 403) });
     expect(await createMeli(CREDS, forbidden.fetchFn).preview(ITEM_URL)).toMatchObject({
       source: "link",
-      warning: "meli_unavailable",
+      warning: "meli_restricted",
     });
+    const down = mockApi({ "/oauth/token": token, "/items/MLB5456370676": () => json({}, 500) });
+    expect((await createMeli(CREDS, down.fetchFn).preview(ITEM_URL)).warning).toBe("meli_unavailable");
     const badToken = mockApi({ "/oauth/token": () => json({ error: "invalid_client" }, 400) });
     expect((await createMeli(CREDS, badToken.fetchFn).preview(ITEM_URL)).warning).toBe("meli_unavailable");
     const notFound = mockApi({ "/oauth/token": token });

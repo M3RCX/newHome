@@ -10,7 +10,8 @@ export type ProductPreview = {
   imageUrl: string | null;
   purchaseUrl: string;
   source: "api" | "link";
-  warning: null | "meli_not_configured" | "meli_unavailable" | "meli_not_found";
+  // meli_restricted: o ML não libera esse tipo de link (403) para apps; meli_unavailable: erro/queda da API.
+  warning: null | "meli_not_configured" | "meli_unavailable" | "meli_restricted" | "meli_not_found";
 };
 
 export interface Meli {
@@ -128,6 +129,15 @@ function fromCatalog(product: Record<string, any> | null): Extracted | null {
   };
 }
 
+class MeliApiError extends Error {
+  constructor(
+    path: string,
+    readonly status: number,
+  ) {
+    super(`meli ${path} ${status}`);
+  }
+}
+
 export function createMeli(credentials: MeliCredentials | null, fetchFn: typeof fetch = fetch): Meli {
   let token: { value: string; expiresAt: number } | null = null;
 
@@ -161,7 +171,7 @@ export function createMeli(credentials: MeliCredentials | null, fetchFn: typeof 
       token = null;
       return get(path, false);
     }
-    if (!res.ok) throw new Error(`meli ${path} ${res.status}`);
+    if (!res.ok) throw new MeliApiError(path, res.status);
     return (await res.json()) as Record<string, any>;
   }
 
@@ -179,17 +189,26 @@ export function createMeli(credentials: MeliCredentials | null, fetchFn: typeof 
       });
       if (!credentials) return fallback("meli_not_configured");
 
-      try {
-        let found: Extracted | null = null;
-        if (ref.itemId) found = fromItem(await get(`/items/${ref.itemId}`));
-        if (!found && ref.productId) found = fromCatalog(await get(`/products/${ref.productId}`));
-        if (!found && ref.userProductId) found = fromCatalog(await get(`/user-products/${ref.userProductId}`));
-        if (!found) return fallback("meli_not_found");
-        return { ...found, purchaseUrl: ref.url, source: "api", warning: null };
-      } catch (err) {
-        console.warn("Mercado Livre indisponível:", err instanceof Error ? err.message : err);
-        return fallback("meli_unavailable");
-      }
+      // Tenta anúncio → catálogo → produto do vendedor. Se um falhar (ex.: 403), segue para o próximo.
+      let restricted = false;
+      let failed = false;
+      const attempt = async (path: string, extract: (data: Record<string, any> | null) => Extracted | null) => {
+        try {
+          return extract(await get(path));
+        } catch (err) {
+          if (err instanceof MeliApiError && err.status === 403) restricted = true;
+          else failed = true;
+          console.warn("Mercado Livre:", err instanceof Error ? err.message : err);
+          return null;
+        }
+      };
+
+      let found: Extracted | null = null;
+      if (ref.itemId) found = await attempt(`/items/${ref.itemId}`, fromItem);
+      if (!found && ref.productId) found = await attempt(`/products/${ref.productId}`, fromCatalog);
+      if (!found && ref.userProductId) found = await attempt(`/user-products/${ref.userProductId}`, fromCatalog);
+      if (found) return { ...found, purchaseUrl: ref.url, source: "api", warning: null };
+      return fallback(failed ? "meli_unavailable" : restricted ? "meli_restricted" : "meli_not_found");
     },
 
     // Baixa a foto do produto (só do CDN do ML) para o servidor guardar no nosso Storage.

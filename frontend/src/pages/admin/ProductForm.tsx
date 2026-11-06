@@ -5,6 +5,7 @@ import { useAdminProduct, useAdminProducts, useDeleteProduct, useSaveProduct } f
 import { adminApi, adminErrorMessage, type AdminProduct, type ProductPreview } from "../../lib/adminApi";
 import { parseBrlToCents } from "../../lib/format";
 import { shrinkImage } from "../../lib/image";
+import { parseMeliHash } from "../../lib/meliBookmarklet";
 import type { ProductKind } from "../../lib/types";
 import ContributionsPanel from "./ContributionsPanel";
 import { LoadError, Loading } from "./shared";
@@ -36,11 +37,18 @@ const isMeliUrl = (s: string) => /^https?:\/\/[^/\s]*mercadoli(vre|bre)\.com/i.t
 type LinkStatus = { kind: "loading" | "ok" | "partial" | "error"; text: string };
 
 function describePreview(p: ProductPreview): LinkStatus {
-  if (!p.warning) return { kind: "ok", text: "Preenchido com os dados do Mercado Livre. Confira tudo antes de salvar." };
+  if (!p.warning) {
+    const missing = [!p.priceCents && "o valor", !p.imageUrl && "a foto"].filter(Boolean).join(" e ");
+    return missing
+      ? { kind: "partial", text: `Preenchi o que o Mercado Livre libera. Falta preencher ${missing}. Confira tudo antes de salvar.` }
+      : { kind: "ok", text: "Preenchido com os dados do Mercado Livre. Confira tudo antes de salvar." };
+  }
   const why =
     p.warning === "meli_not_configured"
       ? "o preenchimento automático completo ainda não foi configurado (veja o README)"
-      : "não consegui buscar os dados no Mercado Livre agora";
+      : p.warning === "meli_restricted"
+        ? "o Mercado Livre não libera os dados desse anúncio para aplicativos"
+        : "não consegui buscar os dados no Mercado Livre agora";
   return { kind: "partial", text: `Só o nome veio do link: ${why}. Preencha o valor e a foto.` };
 }
 
@@ -76,15 +84,34 @@ function ProductForm({ product }: { product?: AdminProduct }) {
   const save = useSaveProduct();
   const remove = useDeleteProduct();
 
-  const [draft, setDraft] = useState<Draft>(product ? fromProduct(product) : EMPTY);
+  // Vindo do favorito do Mercado Livre (#ml=…): pré-preenche só um presente novo.
+  const [fromPage] = useState(() => (product ? null : parseMeliHash(window.location.hash)));
+  const [draft, setDraft] = useState<Draft>(() =>
+    product
+      ? fromProduct(product)
+      : fromPage
+        ? { ...EMPTY, name: fromPage.name, spec: fromPage.spec, price: centsToInput(fromPage.priceCents), purchaseUrl: fromPage.url ?? "" }
+        : EMPTY,
+  );
   const [image, setImage] = useState<{ blob: Blob; url: string } | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
   const [imageError, setImageError] = useState("");
   const [touched, setTouched] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [saved, setSaved] = useState(!!justCreated);
-  const [remoteImage, setRemoteImage] = useState<string | null>(null); // foto vinda do link; o servidor baixa ao salvar
-  const [linkStatus, setLinkStatus] = useState<LinkStatus | null>(null);
+  const [remoteImage, setRemoteImage] = useState<string | null>(fromPage?.imageUrl ?? null); // foto vinda do link; o servidor baixa ao salvar
+  const [linkStatus, setLinkStatus] = useState<LinkStatus | null>(() => {
+    if (!fromPage) return null;
+    const missing = [!fromPage.priceCents && "o valor", !fromPage.imageUrl && "a foto"].filter(Boolean).join(" e ");
+    return missing
+      ? { kind: "partial", text: `Preenchido com os dados da página do Mercado Livre. Falta preencher ${missing}.` }
+      : { kind: "ok", text: "Preenchido com os dados da página do Mercado Livre. Confira tudo antes de salvar." };
+  });
+
+  // Tira o #ml=… do endereço depois de usar: recarregar a página não preenche de novo.
+  useEffect(() => {
+    if (fromPage) window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  }, [fromPage]);
 
   useEffect(() => {
     if (!image) return;
@@ -230,7 +257,8 @@ function ProductForm({ product }: { product?: AdminProduct }) {
               {err("purchaseUrl") || (
                 <span className="hint">
                   Ao colar o link da página do produto no Mercado Livre, o nome, as especificações, o valor e a foto são
-                  preenchidos sozinhos. Confira antes de salvar.
+                  preenchidos sozinhos. Confira antes de salvar. Para links que o Mercado Livre não libera, ou para trazer o
+                  valor, use o <Link to="/admin/botao">botão do navegador</Link>.
                 </span>
               )}
               {isMeliUrl(draft.purchaseUrl) && (

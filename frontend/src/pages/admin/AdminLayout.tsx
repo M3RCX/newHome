@@ -14,7 +14,12 @@ export default function AdminLayout() {
     document.title = "Anfitriã · Casa Nova";
   }, []);
 
-  if (!session) return <Navigate to="/admin/login" replace state={{ from: location.pathname }} />;
+  // Guarda também a busca e o #ml=… do favorito, para o formulário vir preenchido depois do login.
+  if (!session) {
+    return (
+      <Navigate to="/admin/login" replace state={{ from: location.pathname + location.search + location.hash }} />
+    );
+  }
 
   function signOut() {
     logout();
@@ -31,6 +36,7 @@ export default function AdminLayout() {
           </NavLink>
           <NavLink to="/admin/presentes/novo">+ Novo</NavLink>
           <NavLink to="/admin/resumo">Resumo</NavLink>
+          <NavLink to="/admin/botao">Botão ML</NavLink>
           <a href="/" target="_blank" rel="noopener noreferrer">
             Ver site ↗
           </a>
