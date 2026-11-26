@@ -86,8 +86,16 @@ export const chapters: Chapter[] = [
 // Fotos das galerias: coloque os arquivos em frontend/public/photos/ e liste aqui.
 // Ex.: { src: "/photos/obra-1.jpg", caption: "a primeira visita" }
 export const galleries: Record<GalleryKey, Photo[]> = {
-  obra: [],
-  familia: [],
+  obra: [
+    { src: "/photos/ft1.jpeg" },
+    { src: "/photos/ft2.jpeg" },
+    { src: "/photos/ft3.jpeg" },
+  ],
+  familia: [
+    { src: "/photos/ft1-2.jpeg" },
+    { src: "/photos/ft2-2.jpeg" },
+    { src: "/photos/ft3-2.jpeg" },
+  ],
 };
 
 export const GALLERY_LABEL: Record<GalleryKey, string> = {
