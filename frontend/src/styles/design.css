@@ -178,8 +178,7 @@ button,input,textarea,select{font:inherit;color:inherit}
 .vale.paw .stub{background:var(--brass)}
 
 /* modal */
-.scrim{position:fixed;inset:0;background:rgba(8,16,32,.6);display:flex;align-items:flex-end;justify-content:center;padding:16px;z-index:30}
-@media (min-width:640px){.scrim{align-items:center}}
+.scrim{position:fixed;inset:0;background:rgba(8,16,32,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:30}
 .modal{background:var(--card);border-radius:12px;max-width:520px;width:100%;max-height:calc(100% - 16px);overflow:auto;padding:24px;display:grid;gap:16px}
 .modal h3{font-size:28px;text-transform:uppercase}
 .x{justify-self:end;background:none;border:0;font:500 12px var(--mono);color:var(--muted);cursor:pointer;margin-bottom:-12px}
