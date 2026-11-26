@@ -30,11 +30,11 @@ export const site = {
 
 // Pix e WhatsApp: preencha para o copia e cola e o botão do WhatsApp aparecerem no site.
 export const pix: PixConfig = {
-  key: "32384714813", // telefone no formato +5511999999999, e-mail, CPF ou chave aleatória
-  name: "guilherme mercante remberg fernandes", // nome do titular, como aparece no app do banco
+  key: "23f1aabd-34ac-438d-9a34-b8d6fb25f0ab", // telefone no formato +5511999999999, e-mail, CPF ou chave aleatória
+  name: "Leticia collanieri peres", // nome do titular, como aparece no app do banco
   city: "são paulo", // cidade do titular
 };
-export const whatsapp: string = ""; // com DDD, ex.: "+55 11 99999-9999"
+export const whatsapp: string = "+55 11 98399-9852"; // com DDD, ex.: "+55 11 99999-9999"
 
 // Itens a partir deste valor aceitam "ajudar com uma parte" (mesma regra da API).
 export const PARTE_MIN_CENTS = 60000;
