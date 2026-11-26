@@ -22,7 +22,7 @@ export const site = {
   bigDate: "19.12",
   eventDate: "2026-12-19",
   date: "19 de dezembro, sábado",
-  time: "15:00",
+  time: "15h",
   place: "Salão de festa da vovó (Rua José Jannarelli, 198, Jd Guedala)",
   giftNote:
     "Presente não é obrigatório, de verdade. Obrigatória mesmo é a sua presença (essa a gente cobra). Mas, se quiser mimar a casa nova, montamos uma lista bem pensada: dá pra levar no dia ou mandar por Pix.",
@@ -79,7 +79,7 @@ export const chapters: Chapter[] = [
     date: "Agora",
     title: "Hoje, uma família",
     gallery: "familia",
-    text: "Gui, obrigada por ter chegado bem na hora em que eu mais precisava, mesmo eu achando que não era a hora certa. Era. Você era.\n\nHoje a gente é uma família: eu, o Gui e o Lasanha, aqui no 7º andar. 🐶 E queremos você com a gente no dia 19 pra conhecer o apê, conhecer o Lasanha e brindar o meu aniversário.",
+    text: "Gui, obrigada por ter chegado bem na hora em que eu mais precisava, mesmo eu achando que não era a hora certa. Era. Você era.\n\nHoje a gente é uma família: eu, o Gui e o Lasanha, aqui no 7º andar. 🐶 E queremos você com a gente no dia 19 pra comemorar essa conquista e brindar o meu aniversário.",
   },
 ];
 
