@@ -18,12 +18,12 @@ export const site = {
   title: "A casa nova da Letícia e do Gui",
   kicker: "Chá de casa nova + aniversário da Lele",
   intro:
-    "Depois de 3 anos, 5 meses e 30 dias de espera, a chave chegou. No sábado, 19 de dezembro, vamos abrir as portas do apê pela primeira vez pra quem fez parte dessa história, comemorar o meu aniversário e apresentar o Lasanha pra quem ainda não conhece. Vem com a gente!",
+    "Depois de 3 anos, 5 meses e 30 dias de espera, a chave chegou. No sábado, 19 de dezembro, vamos comemorar essa conquista com quem fez parte dessa história e, de quebra, o meu aniversário. Vem com a gente!",
   bigDate: "19.12",
   eventDate: "2026-12-19",
   date: "19 de dezembro, sábado",
-  time: "Horário a confirmar",
-  place: "Nosso apê novo (endereço em breve)",
+  time: "15:00",
+  place: "Salão de festa da vovó (Rua José Jannarelli, 198, Jd Guedala)",
   giftNote:
     "Presente não é obrigatório, de verdade. Obrigatória mesmo é a sua presença (essa a gente cobra). Mas, se quiser mimar a casa nova, montamos uma lista bem pensada: dá pra levar no dia ou mandar por Pix.",
 };
